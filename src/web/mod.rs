@@ -10,7 +10,7 @@ use axum::http::{HeaderMap, StatusCode};
 use axum::response::sse::{Event, KeepAlive};
 use axum::response::{Html, IntoResponse, Redirect, Response, Sse};
 use axum::routing::{get, post};
-use axum::Router;
+use axum::{Json, Router};
 use futures::StreamExt;
 use serde::Deserialize;
 
@@ -67,6 +67,8 @@ pub fn router(state: AppState) -> Router {
         .route("/w/:id/s/:sid/message", post(session_message))
         .route("/w/:id/s/:sid/abort", post(session_abort))
         .route("/w/:id/events", get(worker_events))
+        .route("/w/:id/tools", get(worker_tools))
+        .route("/w/:id/s/:sid/status", get(session_status))
         .with_state(state)
 }
 
@@ -668,6 +670,36 @@ async fn worker_events(
         Ok::<_, Infallible>(sse)
     });
     Ok(Sse::new(s).keep_alive(KeepAlive::new().interval(std::time::Duration::from_secs(15))))
+}
+
+async fn worker_tools(
+    State(st): State<AppState>,
+    _user: CurrentUser,
+    Path(id): Path<String>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let Some(w) = st.db.worker_by_id(&id).map_err(server_error)? else {
+        return Err(StatusCode::NOT_FOUND);
+    };
+    let backend = st.backend_for(&w).map_err(server_error)?;
+    let agents = backend.list_agents().await.unwrap_or_default();
+    let models = backend.list_models().await.unwrap_or_default();
+    Ok(Json(serde_json::json!({ "agents": agents, "models": models })))
+}
+
+async fn session_status(
+    State(st): State<AppState>,
+    _user: CurrentUser,
+    Path((wid, sid)): Path<(String, String)>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let Some(w) = st.db.worker_by_id(&wid).map_err(server_error)? else {
+        return Err(StatusCode::NOT_FOUND);
+    };
+    let backend = st.backend_for(&w).map_err(server_error)?;
+    let busy = matches!(
+        backend.session_status(&sid).await,
+        Ok(crate::agent::SessionActivity::Busy)
+    );
+    Ok(Json(serde_json::json!({ "busy": busy })))
 }
 
 fn build_thread(messages: &[SessionMessage]) -> Vec<MessageView> {

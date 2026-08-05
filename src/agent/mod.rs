@@ -58,6 +58,29 @@ pub fn message_role(msg: &SessionMessage) -> String {
         .to_string()
 }
 
+/// A selectable agent (i.e. a specialized "subagent" persona).
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct AgentInfo {
+    pub name: String,
+    pub model: Option<String>,
+}
+
+/// A model the worker can run, with its context window and reasoning support.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ModelInfo {
+    pub id: String,
+    pub name: String,
+    pub context: Option<u64>,
+    pub reasoning: bool,
+}
+
+/// Reported activity state of a session.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+pub enum SessionActivity {
+    Idle,
+    Busy,
+}
+
 #[async_trait]
 pub trait AgentBackend: Send + Sync {
     async fn list_sessions(&self) -> Result<Vec<Session>, AgentError>;
@@ -68,6 +91,15 @@ pub trait AgentBackend: Send + Sync {
         session_id: &str,
         limit: Option<u32>,
     ) -> Result<Vec<SessionMessage>, AgentError>;
+
+    /// List selectable agents/personas.
+    async fn list_agents(&self) -> Result<Vec<AgentInfo>, AgentError>;
+
+    /// List models the worker can run (with context window + reasoning info).
+    async fn list_models(&self) -> Result<Vec<ModelInfo>, AgentError>;
+
+    /// Whether the given session is currently running.
+    async fn session_status(&self, session_id: &str) -> Result<SessionActivity, AgentError>;
 
     /// Send a plain-text user message without waiting for the reply. The agent
     /// processes it in the background; the UI observes progress via polling or

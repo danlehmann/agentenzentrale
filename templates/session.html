@@ -17,6 +17,8 @@
 
   <div id="thread" class="chat-thread"
        data-events="/w/{{ worker.id }}/events"
+       data-tools="/w/{{ worker.id }}/tools"
+       data-status="/w/{{ worker.id }}/s/{{ session_id }}/status"
        hx-get="/w/{{ worker.id }}/s/{{ session_id }}/thread"
        hx-trigger="load, every 5s, refresh"
        hx-swap="innerHTML">
@@ -29,6 +31,18 @@
         hx-swap="innerHTML"
         hx-disabled-elt="find button">
     <input type="hidden" name="_csrf" value="{{ csrf }}">
+    <div class="composer-tools" id="composer-tools">
+      <span id="ctx-chip" class="ctx-chip" title="Context window"></span>
+      <label>model
+        <select id="model-sel" name="model"><option value="">model…</option></select>
+      </label>
+      <label>agent
+        <select id="agent-sel" name="agent"><option value="">agent…</option></select>
+      </label>
+      <label>reasoning
+        <select id="reason-sel" name="reasoning"><option value="">off</option></select>
+      </label>
+    </div>
     <div class="composer-main">
       <textarea name="text" id="prompt" rows="2"
                 placeholder="Message {{ worker.name }}… (drag a file to attach it)"
@@ -37,8 +51,13 @@
     </div>
     <div class="composer-meta">
       <span id="drops" class="drops"></span>
+      <span id="working" class="working" hidden>
+        <span class="wd"></span><span class="wd"></span><span class="wd"></span>
+      </span>
     </div>
   </form>
+
+  <button id="scroll-end" class="scroll-end" title="Scroll to end" hidden>↓</button>
 </div>
 
 <script src="/static/chat.js" defer></script>
