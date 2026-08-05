@@ -1,22 +1,4 @@
 (function () {
-  // When the on-screen keyboard opens the visual viewport shrinks; when it
-  // closes it grows again. Anchoring the chat page to the visual viewport
-  // keeps the composer just above the keyboard and makes the layout reflow
-  // when the keyboard hides (otherwise the old keyboard space stays blank).
-  function fitChat() {
-    var body = document.body;
-    if (!body.classList.contains('chat-page')) return;
-    var vv = window.visualViewport;
-    if (!vv) return;
-    body.style.height = vv.height + 'px';
-    body.style.transform = 'translateY(' + -vv.offsetTop + 'px)';
-  }
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', fitChat);
-    window.visualViewport.addEventListener('scroll', fitChat);
-  }
-  fitChat();
-
   var prompt = document.getElementById('prompt');
   var drops = document.getElementById('drops');
   if (!prompt) return;

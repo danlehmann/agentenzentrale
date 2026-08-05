@@ -160,15 +160,17 @@ body.chat-page {
 .msg .body code { background: #0c1220; }
 
 .composer { border-top: 1px solid var(--border); padding: 12px; }
-.composer-row { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+.composer-main { display: flex; gap: 10px; align-items: flex-end; }
+.composer-main textarea { flex: 1; }
+.composer-main button { white-space: nowrap; flex: none; }
+.composer-meta { display: flex; gap: 12px; min-height: 18px; margin-top: 6px; }
 
 @media (max-width: 600px) {
   body.chat-page { padding: 0; }
   .chat-frame .top nav { gap: 8px; }
   /* >=16px prevents iOS Safari from auto-zooming on focus */
   .composer textarea { font-size: 16px; }
-  .composer-row { flex-wrap: wrap; }
-  .composer-row button { min-height: 44px; flex: 1; }
+  .composer-main button { min-height: 44px; }
   .chat-thread { margin: 8px 8px 0; border-radius: 10px; }
   .chat-frame .composer { padding: 10px 8px 14px; }
 }
