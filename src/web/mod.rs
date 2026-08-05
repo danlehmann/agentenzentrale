@@ -549,6 +549,13 @@ async fn session_page(
     let backend = st.backend_for(&w).map_err(server_error)?;
     let session = backend.get_session(&sid).await.map_err(server_error)?;
     let title = session.title_display();
+    // The session's current model (used to preselect the correct model).
+    let session_model = session
+        .raw
+        .get("model")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
     let messages = backend
         .list_messages(&sid, Some(200))
         .await
@@ -569,6 +576,7 @@ async fn session_page(
         },
         session_id: sid,
         session_title: title,
+        session_model,
         thread,
     })
 }
@@ -871,6 +879,7 @@ struct SessionTemplate {
     worker: WorkerView,
     session_id: String,
     session_title: String,
+    session_model: String,
     thread: String,
 }
 

@@ -19,6 +19,7 @@
        data-events="/w/{{ worker.id }}/events"
        data-tools="/w/{{ worker.id }}/tools"
        data-status="/w/{{ worker.id }}/s/{{ session_id }}/status"
+       data-model="{{ session_model }}"
        hx-get="/w/{{ worker.id }}/s/{{ session_id }}/thread"
        hx-trigger="load, every 5s, refresh"
        hx-swap="innerHTML">

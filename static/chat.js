@@ -24,9 +24,14 @@
   }
   prompt.addEventListener('input', updateSendState);
   updateSendState();
+  document.body.addEventListener('htmx:beforeRequest', function (e) {
+    var elt = e.detail && e.detail.elt;
+    if (elt && elt.classList && elt.classList.contains('composer')) setWorking(true);
+  });
   document.body.addEventListener('htmx:afterRequest', function (e) {
     var elt = e.detail && e.detail.elt;
     if (elt && elt.classList && elt.classList.contains('composer')) {
+      setWorking(false);
       prompt.value = '';
       updateSendState();
     }
@@ -130,7 +135,17 @@
           }
         }
         modelSel.addEventListener('change', applyModel);
-        if (models.length) { modelSel.selectedIndex = 1; }
+
+        // Preselect this session's actual model if available; otherwise leave
+        // unset so the worker uses its own default (never pick arbitrarily).
+        var wanted = thread.getAttribute('data-model');
+        var foundIdx = -1;
+        if (wanted) {
+          for (var i = 1; i < modelSel.options.length; i++) {
+            if (modelSel.options[i].value === wanted) { foundIdx = i; break; }
+          }
+        }
+        if (foundIdx > 0) modelSel.selectedIndex = foundIdx;
         applyModel();
       })
       .catch(function () {});
@@ -221,7 +236,6 @@
       var es = new EventSource(thread.getAttribute('data-events'));
       var refreshTimer = null;
       function scheduleRefresh() {
-        setWorking(true);
         if (refreshTimer) return;
         refreshTimer = setTimeout(function () {
           refreshTimer = null;
