@@ -49,9 +49,46 @@
   }
 
   var thread = document.getElementById('thread');
+
+  // Add a copy button and line numbers to code blocks. Runs whenever the
+  // thread is (re)rendered. Tool output and diffs are skipped.
+  function enhanceCode(container) {
+    (container || document).querySelectorAll('pre:not(.tool-out):not(.diff):not(.code-block)').forEach(function (pre) {
+      pre.classList.add('code-block');
+      var code = pre.querySelector('code') || pre;
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.textContent = 'copy';
+      btn.addEventListener('click', function () {
+        var text = (pre.querySelector('code') || pre).innerText;
+        var ok = function () { btn.textContent = 'copied!'; setTimeout(function () { btn.textContent = 'copy'; }, 1500); };
+        var fail = function () { btn.textContent = 'failed'; };
+        if (navigator.clipboard) navigator.clipboard.writeText(text).then(ok).catch(fail);
+        else fail();
+      });
+
+      var wrap = document.createElement('div');
+      wrap.className = 'code-wrap';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+      wrap.insertBefore(btn, pre);
+
+      if (code && code.children.length) {
+        var lines = code.innerHTML.split('\n');
+        if (lines[lines.length - 1] === '') lines.pop();
+        if (lines.length > 1) {
+          code.innerHTML = lines.map(function (l, i) {
+            return '<span class="ln">' + (i + 1) + '</span><span class="lc">' + (l === '' ? '\u00a0' : l) + '</span>';
+          }).join('\n');
+          code.classList.add('counted');
+        }
+      }
+    });
+  }
+
   if (thread) {
-    // Track whether the user is "pinned" to the bottom so we only follow new
-    // content while they're at the end; never yank them down mid-read.
     var pinned = true;
     function nearBottom() {
       return thread.scrollHeight - thread.scrollTop - thread.clientHeight < 40;
@@ -62,8 +99,10 @@
 
     pinToBottom();
     var obs = new MutationObserver(function () {
+      enhanceCode(thread);
       if (pinned) pinToBottom();
     });
     obs.observe(thread, { childList: true, subtree: false });
+    enhanceCode(thread);
   }
 })();

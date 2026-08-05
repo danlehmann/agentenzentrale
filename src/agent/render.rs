@@ -3,6 +3,7 @@
 use comrak::plugins::syntect::SyntectAdapter;
 use comrak::{markdown_to_html_with_plugins, Options, Plugins};
 use serde_json::Value;
+use similar::{ChangeTag, TextDiff};
 
 use crate::agent::SessionMessage;
 
@@ -124,16 +125,55 @@ fn render_tool(part: &Value) -> String {
             html_escape(&status)
         ));
     }
-    if shown.is_empty() {
-        format!(
-            "<details class=\"tool\"><summary>{summary}</summary></details>"
-        )
+
+    // File edits render an inline unified diff (old vs new) instead of the
+    // terse "Edit applied successfully" output.
+    let content = if name == "edit" {
+        let old = input.and_then(|v| v.get("oldString")).and_then(|v| v.as_str());
+        let new = input.and_then(|v| v.get("newString")).and_then(|v| v.as_str());
+        match (old, new) {
+            (Some(o), Some(n)) if o != n => Some(render_diff(o, n)),
+            _ => tool_content(&shown),
+        }
     } else {
-        format!(
-            "<details class=\"tool\"><summary>{summary}</summary><pre class=\"tool-out\">{}</pre></details>",
-            html_escape(&shown)
-        )
+        tool_content(&shown)
+    };
+
+    let body = match content {
+        Some(c) => format!("<details class=\"tool\"><summary>{summary}</summary>{c}</details>"),
+        None => format!("<details class=\"tool\"><summary>{summary}</summary></details>"),
+    };
+    body
+}
+
+fn tool_content(shown: &str) -> Option<String> {
+    if shown.is_empty() {
+        None
+    } else {
+        Some(format!(
+            "<pre class=\"tool-out\">{}</pre>",
+            html_escape(shown)
+        ))
     }
+}
+
+/// Render a unified diff between two strings as +/- colored lines.
+fn render_diff(old: &str, new: &str) -> String {
+    let diff = TextDiff::from_lines(old, new);
+    let mut out = String::from("<pre class=\"diff\">");
+    for change in diff.iter_all_changes() {
+        let (sign, cls) = match change.tag() {
+            ChangeTag::Delete => ('-', "d-del"),
+            ChangeTag::Insert => ('+', "d-add"),
+            ChangeTag::Equal => (' ', "d"),
+        };
+        out.push_str(&format!(
+            "<span class=\"{cls}\">{sign}{}</span>",
+            html_escape(change.value())
+        ));
+    }
+    out.push_str("</pre>");
+    out
 }
 
 fn truncate(s: &str, cap: usize) -> String {
@@ -256,5 +296,30 @@ mod tests {
         let out = render_message(&m);
         assert!(out.contains("<strong>result</strong>"));
         assert!(out.contains("<details class=\"tool\">"));
+    }
+
+    #[test]
+    fn edit_tool_renders_diff() {
+        let m = msg(vec![json!({
+            "type": "tool", "tool": "edit",
+            "state": {"status": "completed",
+                      "input": {"filePath": "a/x.rs", "oldString": "foo\nbar\n", "newString": "foo\nbaz\n"}}
+        })]);
+        let out = render_message(&m);
+        assert!(out.contains("class=\"diff\""));
+        assert!(out.contains("d-del"));
+        assert!(out.contains("d-add"));
+        assert!(!out.contains("tool-out"));
+    }
+
+    #[test]
+    fn edit_without_change_uses_plain_output() {
+        let m = msg(vec![json!({
+            "type": "tool", "tool": "edit",
+            "state": {"status": "completed", "input": {"filePath": "a/x.rs"}, "output": "Edit applied successfully."}
+        })]);
+        let out = render_message(&m);
+        assert!(out.contains("class=\"tool-out\""));
+        assert!(!out.contains("class=\"diff\""));
     }
 }

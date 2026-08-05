@@ -155,6 +155,28 @@ body.chat-page {
   background: #0c1220; border: 1px solid var(--border);
   border-radius: 8px; padding: 10px; overflow-x: auto;
 }
+.code-wrap { position: relative; margin: 10px 0; }
+.code-wrap pre { margin: 0; }
+.code-wrap .copy-btn {
+  position: absolute; top: 6px; right: 8px; z-index: 2;
+  background: var(--panel-2); border: 1px solid var(--border);
+  color: var(--muted); font-size: 11px; line-height: 1; border-radius: 6px;
+  padding: 4px 8px; cursor: pointer; opacity: .7;
+}
+.code-wrap .copy-btn:hover { opacity: 1; color: var(--text); }
+pre.code-block code.counted { display: grid; grid-template-columns: max-content 1fr; }
+pre.code-block code.counted .ln {
+  user-select: none; color: var(--muted); text-align: right; padding-right: 1ch;
+}
+pre.code-block code.counted .lc { white-space: pre-wrap; }
+
+.msg .diff {
+  margin: 0; background: #0c1220; padding: 8px 12px; overflow-x: auto;
+  border-radius: 0 0 8px 8px;
+}
+.msg .diff .d { color: var(--muted); white-space: pre-wrap; }
+.msg .diff .d-add { color: #8ce99a; background: rgba(46,160,67,.15); white-space: pre-wrap; }
+.msg .diff .d-del { color: #ffa8a8; background: rgba(248,81,73,.15); white-space: pre-wrap; }
 .msg .body blockquote { margin: 0; padding-left: 12px; border-left: 3px solid var(--accent); color: var(--muted); }
 .msg .body table { margin: 10px 0; }
 .msg .body code { background: #0c1220; }

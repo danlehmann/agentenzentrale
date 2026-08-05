@@ -36,6 +36,7 @@ async-trait = "0.1"
 clap = { version = "4", features = ["derive", "env"] }
 comrak = { version = "0.30", features = ["syntect", "shortcodes"] }
 ammonia = "4"
+similar = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # rcgen disabled by default below; feature-gated via `tls-bootstrap`
