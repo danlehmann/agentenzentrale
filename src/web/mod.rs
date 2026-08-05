@@ -708,7 +708,29 @@ async fn session_status(
         backend.session_status(&sid).await,
         Ok(crate::agent::SessionActivity::Busy)
     );
-    Ok(Json(serde_json::json!({ "busy": busy })))
+    let used = backend
+        .get_session(&sid)
+        .await
+        .ok()
+        .and_then(|s| sum_session_tokens(&s.raw));
+    Ok(Json(serde_json::json!({ "busy": busy, "used": used })))
+}
+
+/// Best-effort total session token usage (input + output) from a Session dto.
+fn sum_session_tokens(v: &serde_json::Value) -> Option<u64> {
+    if let Some(t) = v.get("tokens") {
+        let i = t.get("input").and_then(|x| x.as_u64()).unwrap_or(0);
+        let o = t.get("output").and_then(|x| x.as_u64()).unwrap_or(0);
+        if i + o > 0 {
+            return Some(i + o);
+        }
+    }
+    let i = v.get("tokensInput").and_then(|x| x.as_u64());
+    let o = v.get("tokensOutput").and_then(|x| x.as_u64());
+    match (i, o) {
+        (Some(a), Some(b)) => Some(a + b),
+        _ => None,
+    }
 }
 
 fn build_thread(messages: &[SessionMessage]) -> Vec<MessageView> {

@@ -91,6 +91,18 @@
   var ctxChip = document.getElementById('ctx-chip');
   var workingEl = document.getElementById('working');
 
+  function fmtCtx(n) {
+    if (!n) return '';
+    return n >= 1000000 ? (n / 1000000).toFixed(1) + 'M' : n >= 1000 ? Math.round(n / 1000) + 'k' : String(n);
+  }
+  var maxCtx = 0;
+  function renderCtx(used) {
+    if (!ctxChip) return;
+    var v = used ? fmtCtx(used) : '';
+    if (maxCtx) v = (v ? v + ' / ' : '') + fmtCtx(maxCtx);
+    ctxChip.textContent = v ? 'ctx ' + v : '';
+  }
+
   // ---- activity indicator (Claude-code style dots) ----
   var workTimer = null;
   function setWorking(on) {
@@ -107,10 +119,6 @@
 
   // ---- composer: model / agent / reasoning selectors + context chip ----
   if (thread && thread.getAttribute('data-tools')) {
-    function fmtCtx(n) {
-      if (!n) return '';
-      return n >= 1000000 ? (n / 1000000).toFixed(1) + 'M' : n >= 1000 ? Math.round(n / 1000) + 'k' : String(n);
-    }
     fetch(thread.getAttribute('data-tools'), { headers: { 'Accept': 'application/json' } })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
@@ -127,6 +135,7 @@
           o.value = m.id;
           o.textContent = (m.name || m.id) + (m.context ? ' · ' + fmtCtx(m.context) : '');
           o.setAttribute('data-ctx', fmtCtx(m.context));
+          o.setAttribute('data-ctxraw', m.context || '');
           o.setAttribute('data-reasoning', m.reasoning ? '1' : '0');
           modelSel.appendChild(o);
         });
@@ -147,10 +156,8 @@
             o.textContent = lv;
             reasonSel.appendChild(o);
           });
-          if (ctxChip) {
-            var ctx = opt ? opt.getAttribute('data-ctx') : '';
-            ctxChip.textContent = ctx ? 'ctx ' + ctx : '';
-          }
+          maxCtx = opt ? (Number(opt.getAttribute('data-ctxraw')) || 0) : 0;
+          renderCtx();
         }
         modelSel.addEventListener('change', applyModel);
 
@@ -179,7 +186,7 @@
     var pollStatus = function () {
       fetch(statusUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' })
         .then(function (r) { return r.json(); })
-        .then(function (d) { setWorking(!!d.busy); })
+        .then(function (d) { setWorking(!!d.busy); renderCtx(d.used); })
         .catch(function () {});
     };
     pollStatus();
