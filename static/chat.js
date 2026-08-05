@@ -113,6 +113,24 @@
 
     thread.addEventListener('scroll', function () { pinned = nearBottom(); }, { passive: true });
 
+    // Live refresh via SSE from the worker, debounced so bursts of events
+    // collapse into a single thread refresh. The hx-trigger keeps a slower
+    // poll as a fallback if SSE drops.
+    if (window.EventSource && thread.getAttribute('data-events')) {
+      var es = new EventSource(thread.getAttribute('data-events'));
+      var refreshTimer = null;
+      function scheduleRefresh() {
+        if (refreshTimer) return;
+        refreshTimer = setTimeout(function () {
+          refreshTimer = null;
+          try { htmx.trigger(thread, 'refresh'); } catch (e) {}
+        }, 600);
+      }
+      es.addEventListener('message', scheduleRefresh);
+      es.addEventListener('agent', scheduleRefresh);
+      // EventSource auto-reconnects on error; nothing to do here.
+    }
+
     pinToBottom();
     var obs = new MutationObserver(function () {
       enhanceCode(thread);

@@ -16,8 +16,9 @@
   </header>
 
   <div id="thread" class="chat-thread"
+       data-events="/w/{{ worker.id }}/events"
        hx-get="/w/{{ worker.id }}/s/{{ session_id }}/thread"
-       hx-trigger="load once, every 2s"
+       hx-trigger="load, every 5s, refresh"
        hx-swap="innerHTML">
     {{ thread|safe }}
   </div>
