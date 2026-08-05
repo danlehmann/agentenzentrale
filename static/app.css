@@ -97,11 +97,52 @@ button.danger:hover { color: #fff; }
 
 .crumbs { color: var(--muted); font-size: 14px; }
 
-.chat {
-  border: 1px solid var(--border); border-radius: 12px;
-  background: var(--panel); overflow: hidden;
+/* ---- Chat: fixed app frame; only the thread scrolls ---- */
+html, body { height: 100%; }
+
+body.chat-page {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
-#thread { height: 55vh; overflow-y: auto; padding: 16px; }
+
+.chat-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.chat-frame .top { flex: none; }
+.chat-frame .top nav { flex-wrap: wrap; gap: 10px; }
+.chat-frame .chat-title {
+  color: var(--text);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.chat-thread {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  margin: 12px 16px 0;
+}
+.chat-frame .composer {
+  flex: none;
+  padding: 12px 16px 16px;
+}
 .msg { margin-bottom: 16px; }
 .msg .who { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
 .msg .body {
@@ -120,4 +161,15 @@ button.danger:hover { color: #fff; }
 
 .composer { border-top: 1px solid var(--border); padding: 12px; }
 .composer-row { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+
+@media (max-width: 600px) {
+  body.chat-page { padding: 0; }
+  .chat-frame .top nav { gap: 8px; }
+  /* >=16px prevents iOS Safari from auto-zooming on focus */
+  .composer textarea { font-size: 16px; }
+  .composer-row { flex-wrap: wrap; }
+  .composer-row button { min-height: 44px; flex: 1; }
+  .chat-thread { margin: 8px 8px 0; border-radius: 10px; }
+  .chat-frame .composer { padding: 10px 8px 14px; }
+}
 .drops { color: var(--accent-2); font-size: 13px; }

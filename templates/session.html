@@ -1,22 +1,21 @@
 {% extends "base.html" %}
 {% block title %}{{ session_title }} — {{ worker.name }} — Q{% endblock %}
+{% block body_attrs %}class="chat-page"{% endblock %}
 {% block body %}
-<header class="top">
-  <span class="brand">Q</span>
-  <nav>
-    <a href="/">Workers</a>
-    {% if is_admin %}<a href="/invites">Invites</a>{% endif %}
-    <span class="user">{{ username }}</span>
-    <form method="post" action="/logout" class="inline">
-      <button class="link" type="submit">Sign out</button>
-    </form>
-  </nav>
-</header>
-<p class="crumbs"><a href="/">← Workers</a> · <a href="/w/{{ worker.id }}">{{ worker.name }}</a></p>
-<h1>{{ session_title }}</h1>
+<div class="chat-frame">
+  <header class="top">
+    <span class="brand">Q</span>
+    <nav>
+      <a href="/w/{{ worker.id }}">← {{ worker.name }}</a>
+      <span class="chat-title">{{ session_title }}</span>
+      <form id="abort-form" method="post" action="/w/{{ worker.id }}/s/{{ session_id }}/abort" class="inline">
+        <input type="hidden" name="_csrf" value="{{ csrf }}">
+        <button class="danger link" type="submit">Abort</button>
+      </form>
+    </nav>
+  </header>
 
-<div class="chat">
-  <div id="thread"
+  <div id="thread" class="chat-thread"
        hx-get="/w/{{ worker.id }}/s/{{ session_id }}/thread"
        hx-trigger="load once, every 2s"
        hx-swap="innerHTML">
@@ -28,10 +27,10 @@
         hx-target="#thread"
         hx-swap="innerHTML"
         hx-disabled-elt="find button"
-        hx-on::before-request="document.getElementById('send-btn').disabled=true;document.getElementById('send-status').textContent='sending…'"
-        hx-on::after-request="this.querySelector('#prompt').value='';document.getElementById('send-btn').disabled=false;document.getElementById('send-status').textContent=''">
+        hx-on::before-request="this.querySelector('#send-btn').disabled=true;this.querySelector('#send-status').textContent='sending…'"
+        hx-on::after-request="this.querySelector('#prompt').value='';this.querySelector('#send-btn').disabled=false;this.querySelector('#send-status').textContent=''">
     <input type="hidden" name="_csrf" value="{{ csrf }}">
-    <textarea name="text" id="prompt" rows="3"
+    <textarea name="text" id="prompt" rows="2"
               placeholder="Message {{ worker.name }}… (drag a file to attach it)"></textarea>
     <div class="composer-row">
       <span id="drops" class="drops"></span>
@@ -40,11 +39,6 @@
     </div>
   </form>
 </div>
-
-<form id="abort-form" method="post" action="/w/{{ worker.id }}/s/{{ session_id }}/abort" class="inline">
-  <input type="hidden" name="_csrf" value="{{ csrf }}">
-  <button class="danger link" type="submit">Abort</button>
-</form>
 
 <script src="/static/chat.js" defer></script>
 {% endblock %}

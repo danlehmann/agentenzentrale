@@ -558,8 +558,6 @@ async fn session_page(
     .render()
     .map_err(server_error)?;
     tpl(SessionTemplate {
-        is_admin: user.user.is_admin,
-        username: user.user.username.clone(),
         csrf: user.csrf.clone(),
         worker: WorkerView {
             id: w.id.clone(),
@@ -830,8 +828,6 @@ struct SessionView {
 #[derive(Template)]
 #[template(path = "session.html")]
 struct SessionTemplate {
-    is_admin: bool,
-    username: String,
     csrf: String,
     worker: WorkerView,
     session_id: String,
