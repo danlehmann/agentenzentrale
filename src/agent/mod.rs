@@ -98,6 +98,9 @@ pub trait AgentBackend: Send + Sync {
     /// List models the worker can run (with context window + reasoning info).
     async fn list_models(&self) -> Result<Vec<ModelInfo>, AgentError>;
 
+    /// The worker's default model id, if known.
+    async fn default_model(&self) -> Result<Option<String>, AgentError>;
+
     /// Whether the given session is currently running.
     async fn session_status(&self, session_id: &str) -> Result<SessionActivity, AgentError>;
 

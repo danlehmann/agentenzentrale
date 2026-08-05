@@ -136,16 +136,20 @@
         }
         modelSel.addEventListener('change', applyModel);
 
-        // Preselect this session's actual model if available; otherwise leave
-        // unset so the worker uses its own default (never pick arbitrarily).
-        var wanted = thread.getAttribute('data-model');
-        var foundIdx = -1;
-        if (wanted) {
-          for (var i = 1; i < modelSel.options.length; i++) {
-            if (modelSel.options[i].value === wanted) { foundIdx = i; break; }
+        // Preselect a real model: the session's model, else the worker's
+        // default, else the first listed model.
+        function indexOfValue(v) {
+          for (var i = 0; i < modelSel.options.length; i++) {
+            if (modelSel.options[i].value === v) return i;
           }
+          return -1;
         }
-        if (foundIdx > 0) modelSel.selectedIndex = foundIdx;
+        var wanted = thread.getAttribute('data-model');
+        var fallback = data.default || '';
+        var idx = indexOfValue(wanted);
+        if (idx < 0) idx = indexOfValue(fallback);
+        if (idx < 0 && modelSel.options.length) idx = 0;
+        if (idx >= 0) modelSel.selectedIndex = idx;
         applyModel();
       })
       .catch(function () {});

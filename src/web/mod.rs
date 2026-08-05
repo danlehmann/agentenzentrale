@@ -691,7 +691,8 @@ async fn worker_tools(
     let backend = st.backend_for(&w).map_err(server_error)?;
     let agents = backend.list_agents().await.unwrap_or_default();
     let models = backend.list_models().await.unwrap_or_default();
-    Ok(Json(serde_json::json!({ "agents": agents, "models": models })))
+    let default = backend.default_model().await.ok().flatten();
+    Ok(Json(serde_json::json!({ "agents": agents, "models": models, "default": default })))
 }
 
 async fn session_status(

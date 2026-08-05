@@ -183,6 +183,15 @@ impl AgentBackend for OpencodeBackend {
         Ok(out)
     }
 
+    async fn default_model(&self) -> Result<Option<String>, AgentError> {
+        let resp = Self::check(self.authed(Method::GET, "/provider").send().await?).await?;
+        let v: serde_json::Value = resp.json().await?;
+        Ok(v.get("default")
+            .and_then(|d| d.as_object())
+            .and_then(|m| m.values().find_map(|x| x.as_str()))
+            .map(String::from))
+    }
+
     async fn session_status(&self, session_id: &str) -> Result<SessionActivity, AgentError> {
         let resp = Self::check(self.authed(Method::GET, "/session/status").send().await?).await?;
         let v: serde_json::Value = resp.json().await?;
