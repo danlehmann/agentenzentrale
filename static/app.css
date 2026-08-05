@@ -166,12 +166,31 @@ body.chat-page {
 .composer-meta { display: flex; gap: 12px; min-height: 18px; margin-top: 6px; }
 
 @media (max-width: 600px) {
-  body.chat-page { padding: 0; }
-  .chat-frame .top nav { gap: 8px; }
-  /* >=16px prevents iOS Safari from auto-zooming on focus */
+  /* Mobile: drop the fixed-height app frame (it fights the on-screen keyboard
+     and blacks out on iOS). The page scrolls naturally and the composer is
+     sticky at the bottom — the reliable pattern for keyboards. */
+  body.chat-page {
+    height: auto;
+    overflow: visible;
+    display: block;
+  }
+  .chat-frame {
+    display: block;
+    height: auto;
+  }
+  .chat-thread {
+    overflow: visible;
+    max-height: none;
+    margin: 8px 8px 0;
+    border-radius: 10px;
+  }
+  .chat-frame .composer {
+    position: sticky;
+    bottom: 0;
+    padding: 10px 8px 14px;
+    background: var(--panel);
+  }
   .composer textarea { font-size: 16px; }
   .composer-main button { min-height: 44px; }
-  .chat-thread { margin: 8px 8px 0; border-radius: 10px; }
-  .chat-frame .composer { padding: 10px 8px 14px; }
 }
 .drops { color: var(--accent-2); font-size: 13px; }

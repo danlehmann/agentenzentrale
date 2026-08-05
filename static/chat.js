@@ -1,4 +1,17 @@
 (function () {
+  // iOS Safari leaves a blank band where the on-screen keyboard was and
+  // doesn't re-measure the viewport when the keyboard is dismissed. A tiny
+  // scroll nudge on focusout forces iOS to recompute the layout height.
+  if (document.body.classList.contains('chat-page')) {
+    document.addEventListener('focusout', function () {
+      setTimeout(function () {
+        var y = window.pageYOffset || document.documentElement.scrollTop;
+        window.scrollTo(0, y + 1);
+        window.scrollTo(0, y);
+      }, 150);
+    });
+  }
+
   var prompt = document.getElementById('prompt');
   var drops = document.getElementById('drops');
   if (!prompt) return;
@@ -25,7 +38,7 @@
     }
   });
 
-  var chat = document.querySelector('.chat');
+  var chat = document.querySelector('.chat-frame');
   if (chat) {
     chat.addEventListener('dragover', function (e) { e.preventDefault(); });
     chat.addEventListener('drop', function (e) {
@@ -37,9 +50,19 @@
 
   var thread = document.getElementById('thread');
   if (thread) {
-    if (thread.scrollHeight) thread.scrollTop = thread.scrollHeight;
+    // Track whether the user is "pinned" to the bottom so we only follow new
+    // content while they're at the end; never yank them down mid-read.
+    var pinned = true;
+    function nearBottom() {
+      return thread.scrollHeight - thread.scrollTop - thread.clientHeight < 40;
+    }
+    function pinToBottom() { thread.scrollTop = thread.scrollHeight; }
+
+    thread.addEventListener('scroll', function () { pinned = nearBottom(); }, { passive: true });
+
+    pinToBottom();
     var obs = new MutationObserver(function () {
-      thread.scrollTop = thread.scrollHeight;
+      if (pinned) pinToBottom();
     });
     obs.observe(thread, { childList: true, subtree: false });
   }
