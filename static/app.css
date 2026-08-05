@@ -230,7 +230,12 @@ pre.code-block code.counted .lc { white-space: pre-wrap; }
 .working {
   display: inline-flex; gap: 3px; align-items: center; margin-left: auto;
 }
-.chat-frame .top .working.header { margin-left: 6px; }
+.thread-end {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; padding: 12px; color: var(--muted);
+}
+.thread-end .working { margin-left: 0; }
+.thread-end .end-label { font-size: 13px; }
 .working .wd {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--accent); animation: blink 1.2s infinite;

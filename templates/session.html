@@ -8,13 +8,6 @@
     <nav>
       <a href="/w/{{ worker.id }}">← {{ worker.name }}</a>
       <span class="chat-title">{{ session_title }}</span>
-      <span id="working" class="working header" hidden>
-        <span class="wd"></span><span class="wd"></span><span class="wd"></span>
-      </span>
-      <form id="abort-form" method="post" action="/w/{{ worker.id }}/s/{{ session_id }}/abort" class="inline">
-        <input type="hidden" name="_csrf" value="{{ csrf }}">
-        <button class="danger link" type="submit">Abort</button>
-      </form>
     </nav>
   </header>
 
@@ -22,6 +15,8 @@
        data-events="/w/{{ worker.id }}/events"
        data-tools="/w/{{ worker.id }}/tools"
        data-status="/w/{{ worker.id }}/s/{{ session_id }}/status"
+       data-abort="/w/{{ worker.id }}/s/{{ session_id }}/abort"
+       data-csrf="{{ csrf }}"
        data-model="{{ session_model }}"
        hx-get="/w/{{ worker.id }}/s/{{ session_id }}/thread"
        hx-trigger="load, every 5s, refresh"
@@ -61,5 +56,5 @@
   <button id="scroll-end" class="scroll-end" title="Scroll to end" hidden>↓</button>
 </div>
 
-<script src="/static/chat.js?v=9" defer></script>
+<script src="/static/chat.js?v=10" defer></script>
 {% endblock %}

@@ -89,7 +89,6 @@
 
   var thread = document.getElementById('thread');
   var ctxChip = document.getElementById('ctx-chip');
-  var workingEl = document.getElementById('working');
 
   function fmtCtx(n) {
     if (!n) return '';
@@ -103,17 +102,60 @@
     ctxChip.textContent = v ? 'ctx ' + v : '';
   }
 
-  // ---- activity indicator (Claude-code style dots) ----
+  // ---- activity bar at the end of the scrollable history ----
+  // Dots + "working" + an Abort button, appended as the last element of the
+  // thread so it sits at the bottom of the conversation while active.
+  var statusBar = null;
   var workTimer = null;
+  function buildStatusBar() {
+    var bar = document.createElement('div');
+    bar.className = 'thread-end';
+    bar.hidden = true;
+
+    var dots = document.createElement('span');
+    dots.className = 'working';
+    dots.innerHTML = '<span class="wd"></span><span class="wd"></span><span class="wd"></span>';
+    bar.appendChild(dots);
+
+    var label = document.createElement('span');
+    label.className = 'end-label';
+    label.textContent = 'working…';
+    bar.appendChild(label);
+
+    if (thread && thread.getAttribute('data-abort')) {
+      var form = document.createElement('form');
+      form.method = 'post';
+      form.action = thread.getAttribute('data-abort');
+      form.className = 'inline';
+      var csrf = document.createElement('input');
+      csrf.type = 'hidden';
+      csrf.name = '_csrf';
+      csrf.value = thread.getAttribute('data-csrf') || '';
+      var btn = document.createElement('button');
+      btn.type = 'submit';
+      btn.className = 'danger link';
+      btn.textContent = 'Abort';
+      form.appendChild(csrf);
+      form.appendChild(btn);
+      bar.appendChild(form);
+    }
+    return bar;
+  }
+  function ensureStatusBar() {
+    if (!thread) return;
+    if (!statusBar) statusBar = buildStatusBar();
+    // Move to the end (idempotent) so it survives innerHTML swaps.
+    thread.appendChild(statusBar);
+  }
   function setWorking(on) {
-    if (!workingEl) return;
+    if (!statusBar) return;
     if (on) {
-      workingEl.hidden = false;
+      statusBar.hidden = false;
       if (workTimer) clearTimeout(workTimer);
-      workTimer = setTimeout(function () { workingEl.hidden = true; }, 1800);
+      workTimer = setTimeout(function () { statusBar.hidden = true; }, 2500);
     } else {
       if (workTimer) clearTimeout(workTimer);
-      workingEl.hidden = true;
+      statusBar.hidden = true;
     }
   }
 
@@ -186,7 +228,7 @@
     var pollStatus = function () {
       fetch(statusUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' })
         .then(function (r) { return r.json(); })
-        .then(function (d) { setWorking(!!d.busy); renderCtx(d.used); })
+        .then(function (d) { renderCtx(d.used); })
         .catch(function () {});
     };
     pollStatus();
@@ -265,6 +307,7 @@
       var es = new EventSource(thread.getAttribute('data-events'));
       var refreshTimer = null;
       function scheduleRefresh() {
+        setWorking(true);
         if (refreshTimer) return;
         refreshTimer = setTimeout(function () {
           refreshTimer = null;
@@ -277,7 +320,9 @@
     }
 
     pinToBottom();
+    ensureStatusBar();
     var obs = new MutationObserver(function () {
+      ensureStatusBar();
       enhanceCode(thread);
       updatePinned();
       if (pinned) pinToBottom();
