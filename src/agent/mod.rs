@@ -1,4 +1,4 @@
-//! Agent abstraction. `AgentBackend` is the seam that lets Q talk to any
+//! Agent abstraction. `AgentBackend` is the seam that lets Agentenzentrale talk to any
 //! coding agent instead of being coupled to opencode. `opencode` is the first
 //! implementation; future agents implement the same trait and register a
 //! `Worker.kind`.

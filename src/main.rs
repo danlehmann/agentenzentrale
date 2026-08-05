@@ -1,4 +1,4 @@
-//! Q — Agentenzentrale. An HTTPS control plane and web UI for coding-agent
+//! Agentenzentrale. An HTTPS control plane and web UI for coding-agent
 //! worker machines (opencode first, more pluggable later).
 
 mod agent;
@@ -32,8 +32,20 @@ async fn main() -> anyhow::Result<()> {
     // Master secret for encrypting worker passwords at rest.
     let key = Arc::new(crypto::SecretKey::load_or_create(&data_dir)?);
 
-    // Database (workers, users, sessions, invites).
-    let db_path = data_dir.join("q.sqlite");
+    // Database (workers, users, sessions, invites). Migrate the old name.
+    let new_db = data_dir.join("agentenzentrale.sqlite");
+    let old_db = data_dir.join("q.sqlite");
+    if !new_db.exists() && old_db.exists() {
+        std::fs::rename(&old_db, &new_db)?;
+        for suffix in ["-wal", "-shm"] {
+            let old = data_dir.join(format!("q.sqlite{suffix}"));
+            let new = data_dir.join(format!("agentenzentrale.sqlite{suffix}"));
+            if old.exists() {
+                let _ = std::fs::rename(&old, &new);
+            }
+        }
+    }
+    let db_path = new_db;
     let db = Arc::new(db::Db::open(&db_path, &key)?);
 
     let state = web::AppState {

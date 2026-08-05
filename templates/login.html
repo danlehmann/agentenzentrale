@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Sign in — Q{% endblock %}
+{% block title %}Sign in — Agentenzentrale{% endblock %}
 {% block body %}
 <div class="auth-card">
-  <h1 class="brand big">Q</h1>
+  <h1 class="brand big">Agentenzentrale</h1>
   <p class="sub">Agentenzentrale</p>
   {% if let Some(e) = error %}<div class="alert">{{ e }}</div>{% endif %}
   <form method="post" action="/login">

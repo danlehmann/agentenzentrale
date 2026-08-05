@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{ session_title }} — {{ worker.name }} — Q{% endblock %}
+{% block title %}{{ session_title }} — {{ worker.name }} — Agentenzentrale{% endblock %}
 {% block body_attrs %}class="chat-page"{% endblock %}
 {% block body %}
 <div class="chat-frame">
   <header class="top">
-    <span class="brand">Q</span>
+    <span class="brand">Agentenzentrale</span>
     <nav>
       <a href="/w/{{ worker.id }}">← {{ worker.name }}</a>
       <span class="chat-title">{{ session_title }}</span>

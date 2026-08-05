@@ -3,7 +3,7 @@
 /data-*
 *.sqlite
 *.sqlite3
-.q-key
+.agentenzentrale-key
 *.log
 q.iml
 .vscode/

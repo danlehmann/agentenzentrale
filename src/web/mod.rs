@@ -157,7 +157,7 @@ async fn login_submit(
     let (token, _csrf) = st.db.create_session(&user.id).map_err(server_error)?;
     let secure = if st.config.tls { "; Secure" } else { "" };
     let cookie =
-        format!("q_session={token}; HttpOnly{secure}; SameSite=Lax; Path=/; Max-Age=86400");
+        format!("agentenzentrale_session={token}; HttpOnly{secure}; SameSite=Lax; Path=/; Max-Age=86400");
     redirect_with_cookie("/", &cookie)
 }
 
@@ -196,7 +196,7 @@ async fn logout(State(st): State<AppState>, headers: HeaderMap) -> HandlerResult
         let _ = st.db.delete_session(&tok);
     }
     let secure = if st.config.tls { "; Secure" } else { "" };
-    let cookie = format!("q_session=; HttpOnly{secure}; SameSite=Lax; Path=/; Max-Age=0");
+    let cookie = format!("agentenzentrale_session=; HttpOnly{secure}; SameSite=Lax; Path=/; Max-Age=0");
     redirect_with_cookie("/login", &cookie)
 }
 

@@ -1,11 +1,11 @@
-# Q — Agentenzentrale
+# Agentenzentrale
 
 A unified HTTPS **control plane + web UI** for managing coding-agent worker
 machines. One web interface to reach all of them, built for being published
 over the internet.
 
 `Agentenzentrale` is German for "agent headquarters" — the single place every
-field agent (worker) reports into. The tool is branded **Q**.
+field agent (worker) reports into. The tool is branded **Agentenzentrale**.
 
 Currently supports [opencode](https://opencode.ai) workers; the agent layer is a
 trait so other coding agents can be added later.
@@ -15,9 +15,9 @@ trait so other coding agents can be added later.
 - **One interface to rule them all.** From a single browser page you add
   workers, see their sessions, and chat with each agent.
 - **Connects to opencode servers on your network.** Each worker just runs
-  `opencode serve`; Q talks to it over HTTP (outbound). No SSH or config-file
+  `opencode serve`; Agentenzentrale talks to it over HTTP (outbound). No SSH or config-file
   access on the workers is needed to add a new one — you do it from the UI.
-- **HTTPS with login.** Q serves HTTPS (out of the box with a self-signed cert)
+- **HTTPS with login.** Agentenzentrale serves HTTPS (out of the box with a self-signed cert)
   and requires authentication. Sessions are cookie-based; invites let extra
   users join.
 - **Extensible.** The [`AgentBackend`](src/agent/mod.rs) trait is the seam for
@@ -26,7 +26,7 @@ trait so other coding agents can be added later.
 ## Architecture
 
 ```
-                (browser)  ──HTTPS──►  Q (this program)
+                (browser)  ──HTTPS──►  Agentenzentrale (this program)
                                           │  outbound HTTP
               ┌───────────────────────────┼───────────────────────┐
               ▼                           ▼                       ▼
@@ -36,16 +36,16 @@ trait so other coding agents can be added later.
 
 - Each **worker** is a machine running `opencode serve --hostname 0.0.0.0`
   with a password set (`OPENCODE_SERVER_PASSWORD`).
-- **Q** stores each worker's address + password (encrypted at rest) and dials
+- **Agentenzentrale** stores each worker's address + password (encrypted at rest) and dials
   them outbound. Add/remove workers from the web UI.
-- Q does **not** run the LLMs. The heavy model hardware (your cluster) stays
-  where it already is; Q is just the control and routing layer.
+- Agentenzentrale does **not** run the LLMs. The heavy model hardware (your cluster) stays
+  where it already is; Agentenzentrale is just the control and routing layer.
 
 ## Security model
 
 Security is designed in from the start because the tool is meant to go public.
 
-- **HTTPS everywhere.** TLS via rustls. On first run with no certificate, Q
+- **HTTPS everywhere.** TLS via rustls. On first run with no certificate, Agentenzentrale
   generates a self-signed cert — fine for testing, but for public exposure use
   a real certificate (e.g. put Caddy/Let's Encrypt in front, or supply
   `--cert`/`--key`).
@@ -65,7 +65,7 @@ Security is designed in from the start because the tool is meant to go public.
   handlers, and `javascript:` URLs before it reaches your browser. The only
   relaxation is the `style` attribute (needed for code highlighting), which
   cannot execute code.
-- **Least-privilege workers.** Q authenticates to each worker with basic auth;
+- **Least-privilege workers.** Agentenzentrale authenticates to each worker with basic auth;
   workers need only enough permission to run `opencode serve` for their project.
 
 ## Getting started
@@ -99,10 +99,10 @@ Options (all also settable via `Q_*` env vars):
    Run one server per project/agent you want exposed (each on its own port, or
    in its own container).
 
-2. In Q: **Workers → Add worker**, enter a name, the worker's URL
+2. In Agentenzentrale: **Workers → Add worker**, enter a name, the worker's URL
    (`http://<worker-ip>:4096`), and the same password.
 
-That's it — no SSH, no config file. The worker is reachable from Q immediately.
+That's it — no SSH, no config file. The worker is reachable from Agentenzentrale immediately.
 
 ## Sharing with more users
 
@@ -113,7 +113,7 @@ creates their own account (non-admin). Invites are single-use.
 
 Implement the [`AgentBackend`](src/agent/mod.rs) trait
 (`list_sessions`, `send_text`, `abort`, `events`, …) and register its `kind` in
-[`AppState::backend_for`](src/web/mod.rs). The rest of Q (auth, UI, routing)
+[`AppState::backend_for`](src/web/mod.rs). The rest of Agentenzentrale (auth, UI, routing)
 is agent-agnostic.
 
 ## Development

@@ -2,11 +2,11 @@
 name = "agentenzentrale"
 version = "0.1.0"
 edition = "2021"
-description = "\"Q\" — unified HTTPS control plane + web UI for opencode worker machines (and future coding agents)."
+description = "Agentenzentrale — unified HTTPS control plane + web UI for opencode worker machines (and future coding agents)."
 license = "MIT"
 
 [[bin]]
-name = "q"
+name = "agentenzentrale"
 path = "src/main.rs"
 
 [dependencies]

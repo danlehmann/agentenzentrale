@@ -25,7 +25,13 @@ impl SecretKey {
     pub fn load_or_create(data_dir: &Path) -> anyhow::Result<Self> {
         std::fs::create_dir_all(data_dir)
             .with_context(|| format!("creating data dir {}", data_dir.display()))?;
-        let path = data_dir.join(".q-key");
+        // Migrate from the old-name key file if present.
+        let legacy = data_dir.join(".q-key");
+        let path = data_dir.join(".agentenzentrale-key");
+        if !path.exists() && legacy.exists() {
+            std::fs::rename(&legacy, &path)
+                .with_context(|| format!("migrating {}", legacy.display()))?;
+        }
         if path.exists() {
             let bytes = std::fs::read(&path)
                 .with_context(|| format!("reading secret key {}", path.display()))?;

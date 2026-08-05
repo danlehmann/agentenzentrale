@@ -19,7 +19,7 @@ use rand::rngs::OsRng;
 
 use crate::db::User;
 
-pub const COOKIE_NAME: &str = "q_session";
+pub const COOKIE_NAME: &str = "agentenzentrale_session";
 const LOGIN_MAX_ATTEMPTS: usize = 10;
 const LOGIN_WINDOW: Duration = Duration::from_secs(15 * 60);
 
