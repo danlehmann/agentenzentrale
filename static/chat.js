@@ -24,6 +24,22 @@
   }
   prompt.addEventListener('input', updateSendState);
   updateSendState();
+
+  // Track whether the user explicitly changed model/agent so we only send them
+  // if they did; otherwise let opencode use the session's own defaults. This
+  // avoids rejecting sends with a model id opencode doesn't recognize.
+  var modelSel2 = document.getElementById('model-sel');
+  var agentSel2 = document.getElementById('agent-sel');
+  var modelChanged = false, agentChanged = false;
+  if (modelSel2) modelSel2.addEventListener('change', function () { modelChanged = true; });
+  if (agentSel2) agentSel2.addEventListener('change', function () { agentChanged = true; });
+  document.body.addEventListener('htmx:configRequest', function (e) {
+    var elt = e.detail && e.detail.elt;
+    if (!elt || !elt.classList || !elt.classList.contains('composer')) return;
+    if (!modelChanged) delete e.detail.parameters.model;
+    if (!agentChanged) delete e.detail.parameters.agent;
+  });
+
   document.body.addEventListener('htmx:beforeRequest', function (e) {
     var elt = e.detail && e.detail.elt;
     if (elt && elt.classList && elt.classList.contains('composer')) setWorking(true);
@@ -32,7 +48,8 @@
     var elt = e.detail && e.detail.elt;
     if (elt && elt.classList && elt.classList.contains('composer')) {
       setWorking(false);
-      prompt.value = '';
+      // Only clear the editor on success so a failed send keeps your text.
+      if (e.detail.successful) { prompt.value = ''; }
       updateSendState();
     }
   });
@@ -53,10 +70,11 @@
   }
 
   document.addEventListener('keydown', function (e) {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && prompt) {
-      e.preventDefault();
-      prompt.closest('form').requestSubmit();
-    }
+    if (e.key !== 'Enter' || !prompt) return;
+    // Shift+Enter = newline; plain Enter (or Ctrl/Cmd+Enter) = send.
+    if (e.shiftKey) return;
+    e.preventDefault();
+    prompt.closest('form').requestSubmit();
   });
 
   var chat = document.querySelector('.chat-frame');
@@ -161,7 +179,7 @@
     var pollStatus = function () {
       fetch(statusUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' })
         .then(function (r) { return r.json(); })
-        .then(function (d) { if (d.busy) setWorking(true); })
+        .then(function (d) { setWorking(!!d.busy); })
         .catch(function () {});
     };
     pollStatus();

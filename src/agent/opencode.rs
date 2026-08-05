@@ -4,7 +4,7 @@
 use async_trait::async_trait;
 use eventsource_stream::Eventsource as _;
 use futures::stream::{BoxStream, StreamExt};
-use reqwest::{Method, RequestBuilder};
+use reqwest::{Method, RequestBuilder, StatusCode};
 use serde_json::json;
 
 use super::{
@@ -212,7 +212,8 @@ impl AgentBackend for OpencodeBackend {
         text: &str,
         agent: Option<&str>,
         model: Option<&str>,
-    ) -> Result<(), AgentError> {        let mut body = json!({ "parts": [{ "type": "text", "text": text }] });
+    ) -> Result<(), AgentError> {
+        let mut body = json!({ "parts": [{ "type": "text", "text": text }] });
         if let Some(obj) = body.as_object_mut() {
             if let Some(agent) = agent {
                 obj.insert("agent".into(), json!(agent));
@@ -221,11 +222,34 @@ impl AgentBackend for OpencodeBackend {
                 obj.insert("model".into(), json!(model));
             }
         }
-        self.authed(Method::POST, &format!("/session/{session_id}/prompt_async"))
+        let url = self.endpoint(&format!("/session/{session_id}/prompt_async"));
+        let resp = self
+            .client
+            .request(Method::POST, url)
+            .basic_auth(self.username.clone(), Some(&self.password))
             .json(&body)
             .send()
             .await
             .map_err(AgentError::Io)?;
+        let status = resp.status();
+
+        // Older opencode versions lack `prompt_async`. Fall back to the
+        // standard `/message` endpoint, sent in the background so this request
+        // still returns immediately (the UI observes progress via poll/SSE).
+        if status == StatusCode::NOT_FOUND || status == StatusCode::METHOD_NOT_ALLOWED {
+            let client = self.client.clone();
+            let username = self.username.clone();
+            let password = self.password.clone();
+            let url = self.endpoint(&format!("/session/{session_id}/message"));
+            tokio::spawn(async move {
+                let _ = client
+                    .request(Method::POST, url)
+                    .basic_auth(username, Some(&password))
+                    .json(&body)
+                    .send()
+                    .await;
+            });
+        }
         Ok(())
     }
 

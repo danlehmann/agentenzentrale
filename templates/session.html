@@ -8,6 +8,9 @@
     <nav>
       <a href="/w/{{ worker.id }}">← {{ worker.name }}</a>
       <span class="chat-title">{{ session_title }}</span>
+      <span id="working" class="working header" hidden>
+        <span class="wd"></span><span class="wd"></span><span class="wd"></span>
+      </span>
       <form id="abort-form" method="post" action="/w/{{ worker.id }}/s/{{ session_id }}/abort" class="inline">
         <input type="hidden" name="_csrf" value="{{ csrf }}">
         <button class="danger link" type="submit">Abort</button>
@@ -52,14 +55,11 @@
     </div>
     <div class="composer-meta">
       <span id="drops" class="drops"></span>
-      <span id="working" class="working" hidden>
-        <span class="wd"></span><span class="wd"></span><span class="wd"></span>
-      </span>
     </div>
   </form>
 
   <button id="scroll-end" class="scroll-end" title="Scroll to end" hidden>↓</button>
 </div>
 
-<script src="/static/chat.js?v=3" defer></script>
+<script src="/static/chat.js?v=4" defer></script>
 {% endblock %}
