@@ -16,6 +16,22 @@
   var drops = document.getElementById('drops');
   if (!prompt) return;
 
+  // Disable Send while the editor is empty. In-flight requests are already
+  // handled by the form's hx-disabled-elt, so no "sending" indicator needed.
+  var sendBtn = document.getElementById('send-btn');
+  function updateSendState() {
+    if (sendBtn) sendBtn.disabled = prompt.value.trim() === '';
+  }
+  prompt.addEventListener('input', updateSendState);
+  updateSendState();
+  document.body.addEventListener('htmx:afterRequest', function (e) {
+    var elt = e.detail && e.detail.elt;
+    if (elt && elt.classList && elt.classList.contains('composer')) {
+      prompt.value = '';
+      updateSendState();
+    }
+  });
+
   function attachFile(file) {
     if (!file) return;
     var reader = new FileReader();

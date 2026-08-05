@@ -26,19 +26,16 @@
         hx-post="/w/{{ worker.id }}/s/{{ session_id }}/message"
         hx-target="#thread"
         hx-swap="innerHTML"
-        hx-disabled-elt="find button"
-        hx-on::before-request="this.querySelector('#send-btn').disabled=true;this.querySelector('#send-status').textContent='sending…'"
-        hx-on::after-request="this.querySelector('#prompt').value='';this.querySelector('#send-btn').disabled=false;this.querySelector('#send-status').textContent=''">
+        hx-disabled-elt="find button">
     <input type="hidden" name="_csrf" value="{{ csrf }}">
     <div class="composer-main">
       <textarea name="text" id="prompt" rows="2"
                 placeholder="Message {{ worker.name }}… (drag a file to attach it)"
                 enterkeyhint="send"></textarea>
-      <button id="send-btn" class="primary" type="submit">Send</button>
+      <button id="send-btn" class="primary" type="submit" disabled>Send</button>
     </div>
     <div class="composer-meta">
       <span id="drops" class="drops"></span>
-      <span id="send-status" class="drops"></span>
     </div>
   </form>
 </div>
