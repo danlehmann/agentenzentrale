@@ -708,29 +708,25 @@ async fn session_status(
         backend.session_status(&sid).await,
         Ok(crate::agent::SessionActivity::Busy)
     );
+    // Token usage lives on messages (info.tokens.total is the cumulative
+    // session total and grows). Take the max across the fetched window.
     let used = backend
-        .get_session(&sid)
+        .list_messages(&sid, Some(50))
         .await
         .ok()
-        .and_then(|s| sum_session_tokens(&s.raw));
+        .and_then(|msgs| msgs.iter().filter_map(|m| message_usage(&m.info)).max());
     Ok(Json(serde_json::json!({ "busy": busy, "used": used })))
 }
 
-/// Best-effort total session token usage (input + output) from a Session dto.
-fn sum_session_tokens(v: &serde_json::Value) -> Option<u64> {
-    if let Some(t) = v.get("tokens") {
-        let i = t.get("input").and_then(|x| x.as_u64()).unwrap_or(0);
-        let o = t.get("output").and_then(|x| x.as_u64()).unwrap_or(0);
-        if i + o > 0 {
-            return Some(i + o);
-        }
+/// Best-effort session token usage from a message's info envelope.
+fn message_usage(info: &serde_json::Value) -> Option<u64> {
+    let t = info.get("tokens")?;
+    if let Some(total) = t.get("total").and_then(|x| x.as_u64()) {
+        return Some(total);
     }
-    let i = v.get("tokensInput").and_then(|x| x.as_u64());
-    let o = v.get("tokensOutput").and_then(|x| x.as_u64());
-    match (i, o) {
-        (Some(a), Some(b)) => Some(a + b),
-        _ => None,
-    }
+    let i = t.get("input").and_then(|x| x.as_u64()).unwrap_or(0);
+    let o = t.get("output").and_then(|x| x.as_u64()).unwrap_or(0);
+    Some(i + o)
 }
 
 fn build_thread(messages: &[SessionMessage]) -> Vec<MessageView> {
