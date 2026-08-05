@@ -49,22 +49,6 @@ pub struct SessionMessage {
     pub parts: Vec<Value>,
 }
 
-/// Concatenate the user-visible text of all `text`-typed parts.
-pub fn message_text(msg: &SessionMessage) -> String {
-    msg.parts
-        .iter()
-        .filter_map(|p| {
-            let t = p.get("type").and_then(|v| v.as_str()).unwrap_or("");
-            if t == "text" {
-                p.get("text").and_then(|v| v.as_str())
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
 /// The role of a message, derived from its info envelope.
 pub fn message_role(msg: &SessionMessage) -> String {
     msg.info

@@ -15,8 +15,8 @@ use futures::StreamExt;
 use serde::Deserialize;
 
 use crate::agent::opencode::OpencodeBackend;
-use crate::agent::render::render_markdown;
-use crate::agent::{message_role, message_text, AgentBackend, SessionMessage};
+use crate::agent::render::render_message;
+use crate::agent::{message_role, AgentBackend, SessionMessage};
 use crate::auth::{check_csrf, AdminUser, CurrentUser, LoginLimiter};
 use crate::config::Cli;
 use crate::crypto::SecretKey;
@@ -674,15 +674,14 @@ fn build_thread(messages: &[SessionMessage]) -> Vec<MessageView> {
     messages
         .iter()
         .filter_map(|m| {
-            let text = message_text(m);
-            // Skip tool-only / intermediate turns that carry no visible text;
-            // they'd otherwise render as empty bubbles.
-            if text.trim().is_empty() {
+            let html = render_message(m);
+            // Skip turns with nothing user-visible (reasoning-only, empty).
+            if html.trim().is_empty() {
                 return None;
             }
             Some(MessageView {
                 role: message_role(m),
-                html: render_markdown(&text),
+                html,
             })
         })
         .collect()

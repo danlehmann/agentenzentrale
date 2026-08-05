@@ -159,6 +159,28 @@ body.chat-page {
 .msg .body table { margin: 10px 0; }
 .msg .body code { background: #0c1220; }
 
+.msg .tool {
+  border: 1px solid var(--border); border-radius: 8px;
+  background: #0c1220; margin: 8px 0; overflow: hidden;
+}
+.msg .tool summary {
+  cursor: pointer; padding: 6px 10px;
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+.msg .tool .tool-name { color: var(--accent-2); font-weight: 600; font-family: ui-monospace, Menlo, monospace; }
+.msg .tool .tool-desc { color: var(--muted); font-family: ui-monospace, Menlo, monospace; font-size: .92em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.msg .tool .tool-status { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; }
+.msg .tool .tool-status.ok { color: #4cd07d; }
+.msg .tool .tool-status.err { color: var(--danger); }
+.msg .tool .tool-out {
+  margin: 0; padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  white-space: pre-wrap; word-break: break-word;
+  max-height: 320px; overflow: auto;
+  font-family: ui-monospace, Menlo, monospace; font-size: .9em;
+  color: var(--text);
+}
+
 .composer { border-top: 1px solid var(--border); padding: 12px; }
 .composer-main { display: flex; gap: 10px; align-items: flex-end; }
 .composer-main textarea { flex: 1; }
