@@ -113,6 +113,13 @@ fn render_tool(part: &Value) -> String {
     let err = status == "error";
     let status_cls = if err { "err" } else { "ok" };
     let shown = truncate(&output, TOOL_OUTPUT_CAP);
+    // Stable id so the client can restore open state across thread refreshes.
+    let tool_id = part.get("callID").and_then(|v| v.as_str()).unwrap_or("");
+    let id_attr = if tool_id.is_empty() {
+        String::new()
+    } else {
+        format!(" data-id=\"{}\"", html_escape(tool_id))
+    };
 
     let mut summary = format!(
         "<span class=\"tool-name\">{}</span> <code class=\"tool-desc\">{}</code>",
@@ -140,8 +147,12 @@ fn render_tool(part: &Value) -> String {
     };
 
     let body = match content {
-        Some(c) => format!("<details class=\"tool\"><summary>{summary}</summary>{c}</details>"),
-        None => format!("<details class=\"tool\"><summary>{summary}</summary></details>"),
+        Some(c) => format!(
+            "<details class=\"tool\"{id_attr}><summary>{summary}</summary>{c}</details>"
+        ),
+        None => format!(
+            "<details class=\"tool\"{id_attr}><summary>{summary}</summary></details>"
+        ),
     };
     body
 }

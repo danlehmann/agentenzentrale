@@ -284,5 +284,26 @@
     });
     obs.observe(thread, { childList: true, subtree: false });
     enhanceCode(thread);
+
+    // Keep expanded tool blocks open across thread refreshes. Record which
+    // <details> are open before a swap and re-open them by data-id after.
+    var openTools = [];
+    document.addEventListener('htmx:beforeSwap', function (e) {
+      if (e.detail && e.detail.elt === thread) {
+        openTools = Array.prototype.map.call(
+          thread.querySelectorAll('details.tool[open]'),
+          function (d) { return d.getAttribute('data-id'); }
+        ).filter(Boolean);
+      }
+    });
+    document.addEventListener('htmx:afterSwap', function (e) {
+      if (e.detail && e.detail.elt === thread && openTools.length) {
+        openTools.forEach(function (id) {
+          var el = thread.querySelector('details.tool[data-id="' + id + '"]');
+          if (el) el.open = true;
+        });
+        openTools = [];
+      }
+    });
   }
 })();
