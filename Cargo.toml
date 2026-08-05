@@ -1,0 +1,58 @@
+[package]
+name = "agentenzentrale"
+version = "0.1.0"
+edition = "2021"
+description = "\"Q\" — unified HTTPS control plane + web UI for opencode worker machines (and future coding agents)."
+license = "MIT"
+
+[[bin]]
+name = "q"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+axum = { version = "0.7", features = ["macros", "matched-path"] }
+axum-server = { version = "0.7", features = ["tls-rustls"] }
+rustls = { version = "0.23", features = ["ring"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["trace", "compression-gzip", "fs", "request-id"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+argon2 = "0.5"
+password-hash = "0.5"
+rand = "0.8"
+sha2 = "0.10"
+aes-gcm = "0.10"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
+futures = "0.3"
+eventsource-stream = "0.2"
+askama = "0.12"
+anyhow = "1"
+thiserror = "1"
+chrono = "0.4"
+base64 = "0.22"
+async-trait = "0.1"
+clap = { version = "4", features = ["derive", "env"] }
+comrak = { version = "0.30", features = ["syntect", "shortcodes"] }
+ammonia = "4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# rcgen disabled by default below; feature-gated via `tls-bootstrap`
+# (self-signed cert generation). Enabled by default for out-of-box HTTPS.
+
+[features]
+default = ["tls-bootstrap"]
+# Generate a self-signed cert on first run if none is provided, so HTTPS
+# works out of the box. Disable to serve plain HTTP behind a TLS-terminating
+# reverse proxy instead.
+tls-bootstrap = ["dep:rcgen"]
+
+[dependencies.rcgen]
+version = "0.13"
+optional = true
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

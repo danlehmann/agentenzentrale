@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ session_title }} — {{ worker.name }} — Q{% endblock %}
+{% block body %}
+<header class="top">
+  <span class="brand">Q</span>
+  <nav>
+    <a href="/">Workers</a>
+    {% if is_admin %}<a href="/invites">Invites</a>{% endif %}
+    <span class="user">{{ username }}</span>
+    <form method="post" action="/logout" class="inline">
+      <button class="link" type="submit">Sign out</button>
+    </form>
+  </nav>
+</header>
+<p class="crumbs"><a href="/">← Workers</a> · <a href="/w/{{ worker.id }}">{{ worker.name }}</a></p>
+<h1>{{ session_title }}</h1>
+
+<div class="chat">
+  <div id="thread"
+       hx-get="/w/{{ worker.id }}/s/{{ session_id }}/thread"
+       hx-trigger="load once, every 2s"
+       hx-swap="outerHTML">
+    {{ thread|safe }}
+  </div>
+
+  <form class="composer"
+        hx-post="/w/{{ worker.id }}/s/{{ session_id }}/message"
+        hx-target="#thread"
+        hx-swap="outerHTML"
+        hx-disabled-elt="find button">
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    <textarea name="text" id="prompt" rows="3"
+              placeholder="Message {{ worker.name }}… (drag a file to attach it)"></textarea>
+    <div class="composer-row">
+      <span id="drops" class="drops"></span>
+      <button class="primary" type="submit">Send</button>
+    </div>
+  </form>
+</div>
+
+<form id="abort-form" method="post" action="/w/{{ worker.id }}/s/{{ session_id }}/abort" class="inline">
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <button class="danger link" type="submit">Abort</button>
+</form>
+
+<script src="/static/chat.js" defer></script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Invites — Q{% endblock %}
+{% block body %}
+<header class="top">
+  <span class="brand">Q</span>
+  <nav>
+    <a href="/">Workers</a>
+    {% if is_admin %}<a href="/invites">Invites</a>{% endif %}
+    <span class="user">{{ username }}</span>
+    <form method="post" action="/logout" class="inline">
+      <button class="link" type="submit">Sign out</button>
+    </form>
+  </nav>
+</header>
+<h1>Invites</h1>
+<form method="post" action="/invites" class="inline">
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <button type="submit" class="primary">Create invite link</button>
+</form>
+{% if let Some(link) = new_link %}
+<div class="alert">Invite link (share with the new user): <code class="wrap">{{ link }}</code></div>
+{% endif %}
+{% if pending.is_empty() %}
+<p class="empty">No pending invites.</p>
+{% else %}
+<table>
+  <thead><tr><th>Created</th></tr></thead>
+  <tbody>
+  {% for i in pending %}
+    <tr><td>{{ i.created_at }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+<p><a href="/">← Back</a></p>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Set up — Q{% endblock %}
+{% block body %}
+<div class="auth-card">
+  <h1 class="brand big">Q</h1>
+  <p class="sub">Create the first administrator account</p>
+  {% if let Some(e) = error %}<div class="alert">{{ e }}</div>{% endif %}
+  <form method="post" action="/setup">
+    <label>Username<input name="username" autocomplete="username" required autofocus></label>
+    <label>Password<input type="password" name="password" autocomplete="new-password" required></label>
+    <label>Confirm password<input type="password" name="password2" autocomplete="new-password" required></label>
+    <button type="submit" class="primary">Create admin</button>
+  </form>
+</div>
+{% endblock %}

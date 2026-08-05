@@ -1,0 +1,8 @@
+{% for m in messages %}
+<div class="msg {{ m.role }}">
+  <div class="who">{{ m.role }}</div>
+  <div class="body">{{ m.html|safe }}</div>
+</div>
+{% else %}
+<div class="empty">No messages yet. Ask something below.</div>
+{% endfor %}

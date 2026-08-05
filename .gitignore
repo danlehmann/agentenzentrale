@@ -1,0 +1,10 @@
+/target
+/data
+/data-*
+*.sqlite
+*.sqlite3
+.q-key
+*.log
+q.iml
+.vscode/
+.idea/

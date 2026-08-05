@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Add worker — Q{% endblock %}
+{% block body %}
+<header class="top">
+  <span class="brand">Q</span>
+  <nav>
+    <a href="/">Workers</a>
+    {% if is_admin %}<a href="/invites">Invites</a>{% endif %}
+    <span class="user">{{ username }}</span>
+    <form method="post" action="/logout" class="inline">
+      <button class="link" type="submit">Sign out</button>
+    </form>
+  </nav>
+</header>
+<h1>Add worker</h1>
+{% if let Some(e) = error %}<div class="alert">{{ e }}</div>{% endif %}
+<form method="post" action="/workers" class="stack">
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <label>Display name<input name="name" required placeholder="pi-1"></label>
+  <label>Agent kind
+    <select name="kind">
+      <option value="opencode" selected>opencode</option>
+    </select>
+  </label>
+  <label>Server URL<input name="url" required placeholder="http://192.168.1.50:4096"></label>
+  <label>Server username
+    <input name="username" value="opencode">
+    <small>Basic-auth username (opencode's default; set it if the worker runs <code>OPENCODE_SERVER_USERNAME</code>).</small>
+  </label>
+  <label>Server password
+    <input type="password" name="password" required placeholder="OPENCODE_SERVER_PASSWORD on the worker">
+    <small>The password the worker's <code>opencode serve</code> requires. Stored encrypted.</small>
+  </label>
+  <button type="submit" class="primary">Add worker</button>
+</form>
+<p><a href="/">← Back</a></p>
+{% endblock %}

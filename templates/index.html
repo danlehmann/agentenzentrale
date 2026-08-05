@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Workers — Q{% endblock %}
+{% block body %}
+<header class="top">
+  <span class="brand">Q</span>
+  <nav>
+    <a href="/">Workers</a>
+    {% if is_admin %}<a href="/invites">Invites</a>{% endif %}
+    <span class="user">{{ username }}</span>
+    <form method="post" action="/logout" class="inline">
+      <button class="link" type="submit">Sign out</button>
+    </form>
+  </nav>
+</header>
+<h1>Workers</h1>
+{% if workers.is_empty() %}
+<p class="empty">No workers registered yet.</p>
+{% else %}
+<table>
+  <thead><tr><th>Name</th><th>Kind</th><th>URL</th><th></th></tr></thead>
+  <tbody>
+  {% for w in workers %}
+    <tr>
+      <td><a href="/w/{{ w.id }}">{{ w.name }}</a></td>
+      <td>{{ w.kind }}</td>
+      <td><code>{{ w.url }}</code></td>
+      <td>
+        {% if is_admin %}
+        <a class="link" href="/workers/{{ w.id }}/edit">Edit</a>
+        &nbsp;
+        <form hx-post="/workers/{{ w.id }}/delete" hx-confirm="Delete this worker? Its opencode server stays running." class="inline">
+          <button class="danger link" type="submit">Delete</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% if is_admin %}
+<p class="actions"><a class="btn" href="/workers/new">+ Add worker</a></p>
+{% endif %}
+{% endblock %}
