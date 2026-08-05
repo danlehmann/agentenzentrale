@@ -1,3 +1,6 @@
+{% if let Some(e) = error %}
+<div class="alert">{{ e }}</div>
+{% endif %}
 {% for m in messages %}
 <div class="msg {{ m.role }}">
   <div class="who">{{ m.role }}</div>

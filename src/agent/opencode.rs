@@ -125,13 +125,13 @@ impl AgentBackend for OpencodeBackend {
         Ok(arr.iter().map(Self::parse_message).collect())
     }
 
-    async fn send_text(
+    async fn send_text_async(
         &self,
         session_id: &str,
         text: &str,
         agent: Option<&str>,
         model: Option<&str>,
-    ) -> Result<SessionMessage, AgentError> {
+    ) -> Result<(), AgentError> {
         let mut body = json!({ "parts": [{ "type": "text", "text": text }] });
         if let Some(obj) = body.as_object_mut() {
             if let Some(agent) = agent {
@@ -141,15 +141,12 @@ impl AgentBackend for OpencodeBackend {
                 obj.insert("model".into(), json!(model));
             }
         }
-        let resp = Self::check(
-            self.authed(Method::POST, &format!("/session/{session_id}/message"))
-                .json(&body)
-                .send()
-                .await?,
-        )
-        .await?;
-        let value: serde_json::Value = resp.json().await?;
-        Ok(Self::parse_message(&value))
+        self.authed(Method::POST, &format!("/session/{session_id}/prompt_async"))
+            .json(&body)
+            .send()
+            .await
+            .map_err(AgentError::Io)?;
+        Ok(())
     }
 
     async fn abort(&self, session_id: &str) -> Result<(), AgentError> {

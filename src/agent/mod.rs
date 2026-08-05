@@ -85,14 +85,16 @@ pub trait AgentBackend: Send + Sync {
         limit: Option<u32>,
     ) -> Result<Vec<SessionMessage>, AgentError>;
 
-    /// Send a plain-text user message and wait for the agent's reply.
-    async fn send_text(
+    /// Send a plain-text user message without waiting for the reply. The agent
+    /// processes it in the background; the UI observes progress via polling or
+    /// events. This keeps the web request fast instead of blocking for a turn.
+    async fn send_text_async(
         &self,
         session_id: &str,
         text: &str,
         agent: Option<&str>,
         model: Option<&str>,
-    ) -> Result<SessionMessage, AgentError>;
+    ) -> Result<(), AgentError>;
 
     /// Abort the currently-running turn in a session.
     async fn abort(&self, session_id: &str) -> Result<(), AgentError>;

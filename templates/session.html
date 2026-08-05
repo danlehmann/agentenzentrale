@@ -19,21 +19,24 @@
   <div id="thread"
        hx-get="/w/{{ worker.id }}/s/{{ session_id }}/thread"
        hx-trigger="load once, every 2s"
-       hx-swap="outerHTML">
+       hx-swap="innerHTML">
     {{ thread|safe }}
   </div>
 
   <form class="composer"
         hx-post="/w/{{ worker.id }}/s/{{ session_id }}/message"
         hx-target="#thread"
-        hx-swap="outerHTML"
-        hx-disabled-elt="find button">
+        hx-swap="innerHTML"
+        hx-disabled-elt="find button"
+        hx-on::before-request="document.getElementById('send-btn').disabled=true;document.getElementById('send-status').textContent='sending…'"
+        hx-on::after-request="this.querySelector('#prompt').value='';document.getElementById('send-btn').disabled=false;document.getElementById('send-status').textContent=''">
     <input type="hidden" name="_csrf" value="{{ csrf }}">
     <textarea name="text" id="prompt" rows="3"
               placeholder="Message {{ worker.name }}… (drag a file to attach it)"></textarea>
     <div class="composer-row">
       <span id="drops" class="drops"></span>
-      <button class="primary" type="submit">Send</button>
+      <span id="send-status" class="drops"></span>
+      <button id="send-btn" class="primary" type="submit">Send</button>
     </div>
   </form>
 </div>

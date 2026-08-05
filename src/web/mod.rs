@@ -52,7 +52,10 @@ pub fn router(state: AppState) -> Router {
         .route("/logout", post(logout))
         .route("/workers/new", get(workers_new_page))
         .route("/workers", post(workers_submit))
-        .route("/workers/:id/edit", get(worker_edit_page).post(worker_update))
+        .route(
+            "/workers/:id/edit",
+            get(worker_edit_page).post(worker_update),
+        )
         .route("/workers/:id/delete", post(workers_delete))
         .route("/workers/:id/test", post(workers_test))
         .route("/invites", get(invites_page).post(invites_create))
@@ -315,9 +318,26 @@ async fn worker_update(
     if st.db.worker_by_id(&id).map_err(server_error)?.is_none() {
         return Ok((StatusCode::NOT_FOUND, "worker not found").into_response());
     }
-    let kind = if form.kind.is_empty() { "opencode".to_string() } else { form.kind.clone() };
-    let username = if form.username.trim().is_empty() { "opencode".to_string() } else { form.username.trim().to_string() };
-    st.db.update_worker(&id, form.name.trim(), &kind, form.url.trim(), &username, &form.password, &st.key)
+    let kind = if form.kind.is_empty() {
+        "opencode".to_string()
+    } else {
+        form.kind.clone()
+    };
+    let username = if form.username.trim().is_empty() {
+        "opencode".to_string()
+    } else {
+        form.username.trim().to_string()
+    };
+    st.db
+        .update_worker(
+            &id,
+            form.name.trim(),
+            &kind,
+            form.url.trim(),
+            &username,
+            &form.password,
+            &st.key,
+        )
         .map_err(server_error)?;
     Ok(Redirect::to("/").into_response())
 }
@@ -533,6 +553,7 @@ async fn session_page(
         .map_err(server_error)?;
     let thread = SessionThreadTemplate {
         messages: build_thread(&messages),
+        error: None,
     }
     .render()
     .map_err(server_error)?;
@@ -567,6 +588,7 @@ async fn session_thread(
         .map_err(server_error)?;
     tpl(SessionThreadTemplate {
         messages: build_thread(&messages),
+        error: None,
     })
 }
 
@@ -589,16 +611,27 @@ async fn session_message(
     let backend = st.backend_for(&w).map_err(server_error)?;
     let agent = form.agent.filter(|s| !s.is_empty());
     let model = form.model.filter(|s| !s.is_empty());
-    backend
-        .send_text(&sid, &text, agent.as_deref(), model.as_deref())
+    // Fire-and-forget: don't block the HTTP request for the whole agent turn.
+    if let Err(e) = backend
+        .send_text_async(&sid, &text, agent.as_deref(), model.as_deref())
         .await
-        .map_err(server_error)?;
+    {
+        let messages = backend
+            .list_messages(&sid, Some(200))
+            .await
+            .unwrap_or_default();
+        return tpl(SessionThreadTemplate {
+            messages: build_thread(&messages),
+            error: Some(format!("Failed to send: {e}")),
+        });
+    }
     let messages = backend
         .list_messages(&sid, Some(200))
         .await
         .map_err(server_error)?;
     tpl(SessionThreadTemplate {
         messages: build_thread(&messages),
+        error: None,
     })
 }
 
@@ -810,6 +843,7 @@ struct SessionTemplate {
 #[template(path = "session_thread.html")]
 struct SessionThreadTemplate {
     messages: Vec<MessageView>,
+    error: Option<String>,
 }
 
 struct MessageView {

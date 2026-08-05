@@ -3,6 +3,14 @@
 use comrak::plugins::syntect::SyntectAdapter;
 use comrak::{markdown_to_html_with_plugins, Options, Plugins};
 
+/// A shared, long-lived syntax highlighter. Building one is expensive (it loads
+/// the default syntax + theme sets), so it is created exactly once per process
+/// instead of per message.
+fn adapter() -> &'static SyntectAdapter {
+    static ADAPTER: std::sync::OnceLock<SyntectAdapter> = std::sync::OnceLock::new();
+    ADAPTER.get_or_init(|| SyntectAdapter::new(Some("base16-ocean.dark")))
+}
+
 /// Render a markdown string to sanitized HTML with syntax-highlighted code.
 ///
 /// Security: output is run through `ammonia` to strip scripts, event handlers,
@@ -21,9 +29,8 @@ pub fn render_markdown(markdown: &str) -> String {
     options.extension.footnotes = true;
     options.render.unsafe_ = false;
 
-    let adapter = SyntectAdapter::new(Some("base16-ocean.dark"));
     let mut plugins = Plugins::default();
-    plugins.render.codefence_syntax_highlighter = Some(&adapter);
+    plugins.render.codefence_syntax_highlighter = Some(adapter());
 
     let html = markdown_to_html_with_plugins(markdown, &options, &plugins);
 

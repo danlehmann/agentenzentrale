@@ -328,8 +328,9 @@ impl Db {
 
     pub fn list_workers(&self) -> anyhow::Result<Vec<Worker>> {
         let conn = self.conn.lock().unwrap();
-        let mut stmt =
-            conn.prepare("SELECT id, name, kind, url, username, password_enc FROM workers ORDER BY name")?;
+        let mut stmt = conn.prepare(
+            "SELECT id, name, kind, url, username, password_enc FROM workers ORDER BY name",
+        )?;
         let rows = stmt
             .query_map([], |r| {
                 Ok(Worker {
