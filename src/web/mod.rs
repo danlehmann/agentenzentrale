@@ -673,9 +673,17 @@ async fn worker_events(
 fn build_thread(messages: &[SessionMessage]) -> Vec<MessageView> {
     messages
         .iter()
-        .map(|m| MessageView {
-            role: message_role(m),
-            html: render_markdown(&message_text(m)),
+        .filter_map(|m| {
+            let text = message_text(m);
+            // Skip tool-only / intermediate turns that carry no visible text;
+            // they'd otherwise render as empty bubbles.
+            if text.trim().is_empty() {
+                return None;
+            }
+            Some(MessageView {
+                role: message_role(m),
+                html: render_markdown(&text),
+            })
         })
         .collect()
 }
