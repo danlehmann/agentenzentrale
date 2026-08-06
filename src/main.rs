@@ -55,23 +55,45 @@ async fn main() -> anyhow::Result<()> {
         limiter: Arc::new(auth::LoginLimiter::new()),
     };
 
-    let app = web::router(state)
+    let router = web::router(state)
         .nest_service("/static", ServeDir::new("static"))
         .layer(CompressionLayer::new())
-        .layer(TraceLayer::new_for_http())
-        .into_make_service_with_connect_info::<SocketAddr>();
+        .layer(TraceLayer::new_for_http());
 
+    // Security headers. HSTS is added only when we serve TLS directly (it
+    // means "always use https from now on", so it would be wrong over http).
+    let common = || {
+        tower::ServiceBuilder::new()
+            .layer(SetResponseHeaderLayer::overriding(HeaderName::from_static("x-content-type-options"), HeaderValue::from_static("nosniff")))
+            .layer(SetResponseHeaderLayer::overriding(HeaderName::from_static("x-frame-options"), HeaderValue::from_static("DENY")))
+            .layer(SetResponseHeaderLayer::overriding(HeaderName::from_static("referrer-policy"), HeaderValue::from_static("no-referrer")))
+            .layer(SetResponseHeaderLayer::overriding(HeaderName::from_static("content-security-policy"), HeaderValue::from_static("default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'")))
+    };
     if cli.tls {
         let (cert, key) = ensure_certs(&data_dir, cli.cert_path(), cli.key_path())?;
         let tls = axum_server::tls_rustls::RustlsConfig::from_pem_file(cert, key).await?;
         tracing::info!("listening on https://{addr}");
+        let headers = common().layer(SetResponseHeaderLayer::overriding(HeaderName::from_static("strict-transport-security"), HeaderValue::from_static("max-age=31536000; includeSubDomains")));
+        let app = router
+            .clone()
+            .layer(headers)
+            .into_make_service_with_connect_info::<SocketAddr>();
         axum_server::bind_rustls(addr, tls).serve(app).await?;
     } else {
         tracing::info!("listening on http://{addr} (TLS disabled)");
+        let app = router
+            .clone()
+            .layer(common())
+            .into_make_service_with_connect_info::<SocketAddr>();
         axum_server::bind(addr).serve(app).await?;
     }
     Ok(())
 }
+
+use axum::http::header::HeaderName;
+use axum::http::HeaderValue;
+use tower_http::set_header::SetResponseHeaderLayer;
+
 
 fn init_logging() {
     let filter = EnvFilter::try_from_default_env()

@@ -155,7 +155,7 @@ async fn login_submit(
     }
     st.limiter.record_success(&ip);
     let (token, _csrf) = st.db.create_session(&user.id).map_err(server_error)?;
-    let secure = if st.config.tls { "; Secure" } else { "" };
+    let secure = if cookie_secure(&st) { "; Secure" } else { "" };
     let cookie =
         format!("agentenzentrale_session={token}; HttpOnly{secure}; SameSite=Lax; Path=/; Max-Age=86400");
     redirect_with_cookie("/", &cookie)
@@ -195,7 +195,7 @@ async fn logout(State(st): State<AppState>, headers: HeaderMap) -> HandlerResult
     if let Some(tok) = crate::auth::token_from_headers(&headers) {
         let _ = st.db.delete_session(&tok);
     }
-    let secure = if st.config.tls { "; Secure" } else { "" };
+    let secure = if cookie_secure(&st) { "; Secure" } else { "" };
     let cookie = format!("agentenzentrale_session=; HttpOnly{secure}; SameSite=Lax; Path=/; Max-Age=0");
     redirect_with_cookie("/login", &cookie)
 }
@@ -370,6 +370,20 @@ fn base_url(st: &AppState) -> String {
         .unwrap_or_else(|| format!("http://127.0.0.1:"))
         .trim_end_matches('/')
         .to_string()
+}
+
+/// Whether session cookies should carry the `Secure` flag: when we serve TLS
+/// directly, or when the advertised public URL is https (e.g. behind a
+/// TLS-terminating reverse proxy that Q itself sees as plain HTTP).
+fn cookie_secure(st: &AppState) -> bool {
+    if st.config.tls {
+        return true;
+    }
+    st.config
+        .public_url
+        .as_deref()
+        .map(|u| u.trim_start().starts_with("https://"))
+        .unwrap_or(false)
 }
 
 async fn invites_page(State(st): State<AppState>, admin: AdminUser) -> HandlerResult {
